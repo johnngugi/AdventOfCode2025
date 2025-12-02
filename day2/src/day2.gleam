@@ -8,27 +8,27 @@ import simplifile
 pub fn main() -> Nil {
   let assert Ok(lines) = simplifile.read(from: "src/input.txt")
 
+  let ranges =
+    lines
+    |> string.split(",")
+    |> list.map(string.trim)
+    |> list.filter(fn(r) { r != "" })
+
   // Uncomment for part 1
-  // lines
-  // |> string.split(",")
-  // |> list.map(string.trim)
-  // |> list.filter(fn(r) { r != "" })
-  // |> solution_1
+  // ranges
+  // |> sum_invalid(is_invalid_1)
   // |> int.to_string
   // |> io.println
 
-  lines
-  |> string.split(",")
-  |> list.map(string.trim)
-  |> list.filter(fn(r) { r != "" })
-  |> solution_2
+  ranges
+  |> sum_invalid(is_invalid_2)
   |> int.to_string
   |> io.println
 
   Nil
 }
 
-fn solution_1(ranges: List(String)) -> Int {
+fn sum_invalid(ranges: List(String), is_invalid: fn(Int) -> Bool) -> Int {
   ranges
   |> list.map(fn(range) { string.split(range, "-") })
   |> list.fold(0, fn(acc, curr) {
@@ -36,12 +36,12 @@ fn solution_1(ranges: List(String)) -> Int {
     let first = int.parse(first) |> result.unwrap(0)
     let last = int.parse(last) |> result.unwrap(0)
 
-    let curr_sum =
+    let range_sum =
       list.range(first, last)
-      |> list.filter(is_invalid_1)
+      |> list.filter(is_invalid)
       |> int.sum
 
-    acc + curr_sum
+    acc + range_sum
   })
 }
 
@@ -58,23 +58,6 @@ fn is_invalid_1(num: Int) -> Bool {
       first == last
     }
   }
-}
-
-fn solution_2(ranges: List(String)) -> Int {
-  ranges
-  |> list.map(fn(range) { string.split(range, "-") })
-  |> list.fold(0, fn(acc, curr) {
-    let assert [first, last] = curr
-    let first = int.parse(first) |> result.unwrap(0)
-    let last = int.parse(last) |> result.unwrap(0)
-
-    let invalids_sum =
-      list.range(first, last)
-      |> list.filter(is_invalid_2)
-      |> int.sum
-
-    acc + invalids_sum
-  })
 }
 
 fn is_invalid_2(num: Int) -> Bool {
