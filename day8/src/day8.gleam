@@ -1,4 +1,5 @@
 import gleam/dict
+
 import gleam/float
 import gleam/int
 import gleam/io
@@ -21,6 +22,13 @@ pub fn main() -> Nil {
   |> string.trim
   |> string.split("\n")
   |> solution_1
+  |> int.to_string
+  |> io.println
+
+  content
+  |> string.trim
+  |> string.split("\n")
+  |> solution_2
   |> int.to_string
   |> io.println
 
@@ -59,6 +67,70 @@ fn solution_1(lines: List(String)) -> Int {
   |> list.sort(fn(a, b) { int.compare(b.1, a.1) })
   |> list.take(3)
   |> list.fold(1, fn(acc, curr) { acc * curr.1 })
+}
+
+fn solution_2(lines: List(String)) -> Int {
+  let coordinates =
+    lines
+    |> list.map(fn(line) { string.split(line, ",") })
+    |> list.map(fn(line) {
+      list.map(line, fn(num_str) {
+        let assert Ok(num) = int.parse(num_str)
+        num
+      })
+    })
+    |> list.map(fn(coordinates) {
+      let assert [x, y, z] = coordinates
+      Coordinate(x:, y:, z:)
+    })
+
+  let circuits =
+    coordinates
+    |> list.index_map(fn(coordinate, index) { #(coordinate, index) })
+    |> dict.from_list
+
+  let distances =
+    get_distances(coordinates, [])
+    |> list.sort(fn(a, b) { float.compare(a.distance, b.distance) })
+
+  let assert Ok(last_pair) =
+    make_connections_until_one(distances, circuits, list.length(coordinates))
+
+  last_pair.box_a.x * last_pair.box_b.x
+}
+
+fn make_connections_until_one(
+  distances: List(DistancePair),
+  circuits: dict.Dict(Coordinate, Int),
+  num_circuits: Int,
+) -> Result(DistancePair, Nil) {
+  case distances {
+    [] -> Error(Nil)
+    [first, ..rest] -> {
+      let assert Ok(id_a) = dict.get(circuits, first.box_a)
+      let assert Ok(id_b) = dict.get(circuits, first.box_b)
+
+      case id_a == id_b {
+        True -> make_connections_until_one(rest, circuits, num_circuits)
+        False -> {
+          let new_num_circuits = num_circuits - 1
+          case new_num_circuits == 1 {
+            True -> Ok(first)
+            False -> {
+              let new_circuit =
+                dict.map_values(circuits, fn(_coordinate, circuit_id) {
+                  case circuit_id == id_b {
+                    True -> id_a
+                    False -> circuit_id
+                  }
+                })
+              make_connections_until_one(rest, new_circuit, new_num_circuits)
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 fn make_connections(
